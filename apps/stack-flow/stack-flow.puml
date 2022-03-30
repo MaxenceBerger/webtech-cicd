@@ -1,0 +1,87 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+package Read {
+  package Queries {
+    class GetFavoritePostQuery {
+      execute(): List<ReadPost>
+    }
+  }
+
+  package ReadModel {
+    class ReadPost {
+      description: string
+      nbLikes: int
+    }
+  }
+
+  package ReadRepository {
+    class ReadRepo {
+      getByLike(): List<ReadPost>
+    }
+  }
+}
+
+package Write {
+  package Commands {
+    class CreatePostCommand {
+      execute(userId: int, description: string) : string;
+    }
+
+    class LikePostCommand {
+      execute(userId: int, postId: string): void;
+    }
+  }
+
+  package WriteModel {
+    class WritePost {
+      id: string
+      content: string
+      createdBy : int
+    }
+
+    class Like {
+      userId
+    }
+
+    WritePost *- Like
+  }
+
+  package WriteRepository {
+    class WriteRepo {
+      save(post: WritePost): void
+      get(id: string): WritePost
+      getByLike(): List<ReadPost>
+    }
+  }
+}
+
+package Synchro {
+  class EventBus {
+    subscribe(handler : Handler)
+    publish(event: DomainEvent)
+  }
+
+  class NewPostHandler {
+    handle(event: DomainEvent)
+  }
+
+  class NewLikeHandler {
+    handle(event: DomainEvent)
+  }
+}
+
+CreatePostCommand --> WriteRepo
+LikePostCommand --> WriteRepo
+
+GetFavoritePostQuery --> ReadRepo
+
+CreatePostCommand --> EventBus : "Event: CREATED_POST"
+LikePostCommand --> EventBus : "Event: NEW_LIKE"
+NewPostHandler --> EventBus : "Subscribe"
+NewPostHandler --> ReadRepo : "Update"
+NewLikeHandler --> EventBus : "Subscribe"
+NewLikeHandler --> ReadRepo : "Update"
+
+
+@enduml
